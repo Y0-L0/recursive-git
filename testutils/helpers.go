@@ -23,6 +23,14 @@ func Ok(tb testing.TB, err error) {
 
 // equals fails the test if exp is not equal to act.
 func Equals(tb testing.TB, exp, act interface{}) {
+	expType := reflect.TypeOf(exp).String()
+	actType := reflect.TypeOf(act).String()
+
+	if expType != actType {
+		tb.Fatalf("\nexp: %#v\ngot: %#v", expType, actType)
+		return
+	}
+
 	tb.Helper()
 	if !reflect.DeepEqual(exp, act) {
 		tb.Fatalf("\nexp: %#v\ngot: %#v", exp, act)
