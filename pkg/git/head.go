@@ -10,7 +10,7 @@ func GetHead(base string) (GitSha, error) {
 	if err != nil {
 		return "", fmt.Errorf("'base' is not a valid git base directory, %w", err)
 	}
-	refCleaned := string(ref[5:len(ref)-1])
+	refCleaned := string(ref[5 : len(ref)-1])
 
 	sha, err := getRef(base, refCleaned)
 	if err != nil {
