@@ -29,4 +29,3 @@ func TestGetRefWrongContent(t *testing.T) {
 	// TODO: Validate that the correct error is returned!
 	testutils.Assert(t, err != nil, "Expected an InvalidContent error but got nil")
 }
-

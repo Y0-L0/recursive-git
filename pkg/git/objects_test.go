@@ -1,7 +1,6 @@
 package git
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/Y0-L0/recursive-git/testutils"
@@ -13,6 +12,5 @@ func TestGetObject(t *testing.T) {
 	obj, err := getObject(TEST_REPO_BASE, GitSha("eeea1494ed65e09bb20d43bd3fc384a3e65da43a"))
 	testutils.Ok(t, err)
 
-	fmt.Print(obj)
 	testutils.Equals(t, expected, obj)
 }
