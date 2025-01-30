@@ -46,3 +46,16 @@ func TestGetRefWrongContent(t *testing.T) {
 	// TODO: Validate that the correct error is returned!
 	testutils.Assert(t, err != nil, "Expected an InvalidContent error but got nil")
 }
+
+func TestCommitCaching(t *testing.T) {
+	repo := testRepo()
+	commit, err := repo.Commit(EXAMPLE_COMMIT.sha)
+	testutils.Ok(t, err)
+
+	commit1, err := repo.Commit(EXAMPLE_COMMIT.sha)
+	testutils.Ok(t, err)
+
+	if commit != commit1 {
+		t.Fatalf("\nexp: %p\ngot: %p", commit, commit1)
+	}
+}

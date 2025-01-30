@@ -51,15 +51,3 @@ func newCommit(object string) (*Commit, error) {
 	slog.Debug("Parsed commit", "commit", commit)
 	return &commit, nil
 }
-
-func (repo *Repo) Commit(sha GitSha) (*Commit, error) {
-	object, err := getObject(repo.base, sha)
-	if err != nil {
-		return nil, err
-	}
-	commit, err := newCommit(object)
-	if err != nil {
-		return nil, err
-	}
-	return commit, nil
-}

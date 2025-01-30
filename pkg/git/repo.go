@@ -2,6 +2,7 @@ package git
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 )
@@ -9,15 +10,16 @@ import (
 type GitSha string
 
 type Repo struct {
-	commitCache map[GitSha]Commit
-	base string
-	head GitSha
+	commitCache map[GitSha]*Commit
+	base        string
+	head        GitSha
 }
 
 func NewRepo(base string) *Repo {
 	return &Repo{
-		base: base,
-		head: GitSha(""),
+		commitCache: make(map[GitSha]*Commit),
+		base:        base,
+		head:        GitSha(""),
 	}
 }
 
@@ -38,6 +40,24 @@ func (repo *Repo) Head() (GitSha, error) {
 	}
 	repo.head = sha
 	return sha, nil
+}
+
+func (repo *Repo) Commit(sha GitSha) (*Commit, error) {
+	commit := repo.commitCache[sha]
+	if commit != nil {
+		slog.Debug("Found commit in commit cache", "sha", sha)
+		return commit, nil
+	}
+	object, err := getObject(repo.base, sha)
+	if err != nil {
+		return nil, err
+	}
+	commit, err = newCommit(object)
+	if err != nil {
+		return nil, err
+	}
+	repo.commitCache[sha] = commit
+	return commit, nil
 }
 
 func (repo *Repo) ref(ref string) (GitSha, error) {
