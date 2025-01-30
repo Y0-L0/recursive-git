@@ -1,20 +1,21 @@
-package git
+package commit
 
 import (
 	"fmt"
 	"log/slog"
+  m "github.com/Y0-L0/recursive-git/git/pkg/models"
 	"strings"
 )
 
 type Commit struct {
-	tree      GitSha
-	parent    GitSha
-	author    string
-	committer string
-	message   string
+	Tree      m.GitSha
+	Parent    m.GitSha
+	Author    string
+	Committer string
+	Message   string
 }
 
-func newCommit(object string) (*Commit, error) {
+func NewCommit(object string) (*Commit, error) {
 	treeIndex := strings.Index(object, "\x00tree ")
 	parentIndex := strings.Index(object, "\nparent ")
 	authorIndex := strings.Index(object, "\nauthor ")
@@ -41,8 +42,8 @@ func newCommit(object string) (*Commit, error) {
 	}
 
 	commit := Commit{
-		GitSha(object[treeIndex+6 : treeIndex+6+40]),
-		GitSha(parent),
+		m.GitSha(object[treeIndex+6 : treeIndex+6+40]),
+		m.GitSha(parent),
 		object[authorIndex+8 : committerIndex],
 		object[committerIndex+11 : messageIndex],
 		object[messageIndex+2:],
@@ -50,16 +51,4 @@ func newCommit(object string) (*Commit, error) {
 
 	slog.Debug("Parsed commit", "commit", commit)
 	return &commit, nil
-}
-
-func (repo *Repo) Commit(sha GitSha) (*Commit, error) {
-	object, err := getObject(repo.base, sha)
-	if err != nil {
-		return nil, err
-	}
-	commit, err := newCommit(object)
-	if err != nil {
-		return nil, err
-	}
-	return commit, nil
 }

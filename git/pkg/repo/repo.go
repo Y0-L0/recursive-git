@@ -1,28 +1,28 @@
-package git
+package repo
 
 import (
 	"fmt"
 	"os"
 	"strings"
+  "github.com/Y0-L0/recursive-git/git/pkg/commit"
+  m "github.com/Y0-L0/recursive-git/git/pkg/models"
 )
 
-type GitSha string
-
 type Repo struct {
-	commitCache map[GitSha]Commit
+	commitCache map[m.GitSha]commit.Commit
 	base string
-	head GitSha
+	head m.GitSha
 }
 
 func NewRepo(base string) *Repo {
 	return &Repo{
 		base: base,
-		head: GitSha(""),
+		head: m.GitSha(""),
 	}
 }
 
-func (repo *Repo) Head() (GitSha, error) {
-	if repo.head != GitSha("") {
+func (repo *Repo) Head() (m.GitSha, error) {
+	if repo.head != m.GitSha("") {
 		return repo.head, nil
 	}
 
@@ -40,15 +40,27 @@ func (repo *Repo) Head() (GitSha, error) {
 	return sha, nil
 }
 
-func (repo *Repo) ref(ref string) (GitSha, error) {
+func (repo *Repo) ref(ref string) (m.GitSha, error) {
 	refPath := repo.base + ".git/" + ref
 	shaBytes, err := os.ReadFile(refPath)
 	if err != nil {
 		return "", fmt.Errorf("invalid git ref path, %w", err)
 	}
-	sha := GitSha(strings.TrimSpace(string(shaBytes)))
+	sha := m.GitSha(strings.TrimSpace(string(shaBytes)))
 	if len(sha) != 40 {
 		return "", fmt.Errorf("invalid content of git ref %s", refPath)
 	}
 	return sha, nil
+}
+
+func (repo *Repo) Commit(sha m.GitSha) (*commit.Commit, error) {
+	object, err := getObject(repo.base, sha)
+	if err != nil {
+		return nil, err
+	}
+	commit, err := commit.NewCommit(object)
+	if err != nil {
+		return nil, err
+	}
+	return commit, nil
 }

@@ -1,4 +1,4 @@
-package git
+package test
 
 import (
 	"log/slog"
