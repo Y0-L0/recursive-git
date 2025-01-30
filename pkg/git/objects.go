@@ -11,8 +11,8 @@ import (
 	"strings"
 )
 
-func GetCommit(base string, sha GitSha) (*Commit, error) {
-	object, err := getObject(base, sha)
+func (repo Repo) Commit(sha GitSha) (*Commit, error) {
+	object, err := getObject(repo.base, sha)
 	if err != nil {
 		return nil, err
 	}
@@ -25,27 +25,27 @@ func GetCommit(base string, sha GitSha) (*Commit, error) {
 
 func parseCommit(object string) (*Commit, error) {
 	treeIndex := strings.Index(object, "\x00tree ")
-  parentIndex := strings.Index(object, "\nparent ")
+	parentIndex := strings.Index(object, "\nparent ")
 	authorIndex := strings.Index(object, "\nauthor ")
 	committerIndex := strings.Index(object, "\ncommitter ")
 	messageIndex := strings.Index(object, "\n\n")
 
-  slog.Debug("Commit string parsing indexes", "treeIndex", treeIndex, "parentIndex", parentIndex, "authorIndex", authorIndex, "committerIndex", committerIndex, "messageIndex", messageIndex)
+	slog.Debug("Commit string parsing indexes", "treeIndex", treeIndex, "parentIndex", parentIndex, "authorIndex", authorIndex, "committerIndex", committerIndex, "messageIndex", messageIndex)
 
-  var parents []string
-  var parent string
-  substring := object[parentIndex:]
+	var parents []string
+	var parent string
+	substring := object[parentIndex:]
 
-  for substring[:8] == "\nparent " {
-    parent = substring[8:48]
-    parents = append(parents, parent)
-    substring = substring[48:]
-  }
+	for substring[:8] == "\nparent " {
+		parent = substring[8:48]
+		parents = append(parents, parent)
+		substring = substring[48:]
+	}
 
-  slog.Debug("Commit string parsing results", "parents", parents, "substring", substring)
+	slog.Debug("Commit string parsing results", "parents", parents, "substring", substring)
 
 	if treeIndex == -1 || parentIndex == -1 || authorIndex == -1 || committerIndex == -1 || messageIndex == -1 {
-    slog.Warn("Commit message parsing failed", "commit", object)
+		slog.Warn("Commit message parsing failed", "commit", object)
 		return nil, fmt.Errorf("failed to split commit string:\n%s", object)
 	}
 
@@ -57,7 +57,7 @@ func parseCommit(object string) (*Commit, error) {
 		object[messageIndex+2:],
 	}
 
-  slog.Debug("Parsed commit", "commit", commit)
+	slog.Debug("Parsed commit", "commit", commit)
 	return &commit, nil
 }
 
@@ -65,13 +65,13 @@ func getObject(base string, sha GitSha) (string, error) {
 	objectPath := path.Join(base, ".git/objects", string(sha[:2]), string(sha[2:]))
 	objectBytes, err := os.ReadFile(objectPath)
 	if err != nil {
-    slog.Error("Failed to read git object file", "sha", sha)
+		slog.Error("Failed to read git object file", "sha", sha)
 		return "", err
 	}
 
 	reader, err := zlib.NewReader(bytes.NewReader(objectBytes))
 	if err != nil {
-    slog.Error("Failed to initialize zlib reader", "sha", sha)
+		slog.Error("Failed to initialize zlib reader", "sha", sha)
 		return "", err
 	}
 	defer reader.Close()
@@ -79,12 +79,12 @@ func getObject(base string, sha GitSha) (string, error) {
 	var byteObject bytes.Buffer
 	_, err = io.Copy(&byteObject, reader)
 	if err != nil {
-    slog.Error("Failed to decompress git object", "sha", sha)
+		slog.Error("Failed to decompress git object", "sha", sha)
 		return "", err
 	}
 
-  object := byteObject.String()
+	object := byteObject.String()
 
-  slog.Debug("Read git object from file", "sha", sha, "object", object)
+	slog.Debug("Read git object from file", "sha", sha, "object", object)
 	return object, nil
 }

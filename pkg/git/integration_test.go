@@ -10,9 +10,9 @@ import (
 )
 
 func TestMain(m *testing.M) {
-  SetupLogging(slog.LevelDebug)
-  code := m.Run()
-  os.Exit(code)
+	SetupLogging(slog.LevelDebug)
+	code := m.Run()
+	os.Exit(code)
 }
 
 func TestGetHead(t *testing.T) {
@@ -24,20 +24,20 @@ func TestGetHead(t *testing.T) {
 		message:   "chore(release): 0.1.0 [skip ci]\n\n## [0.1.0](https://git.knut.univention.de/univention/customers/dataport/upx/directory-importer/compare/v0.0.2...v0.1.0) (2025-01-20)\n\n### Features\n\n* standard nubus logging setup ([f75d623](https://git.knut.univention.de/univention/customers/dataport/upx/directory-importer/commit/f75d62306d0a8e5785b2c194817fcd4f0a3cb636))\n",
 	}
 
-	sha, err := GetHead(TEST_REPO_BASE)
+	sha, err := testRepo().Head()
 	testutils.Ok(t, err)
-	commit, err := GetCommit(TEST_REPO_BASE, sha)
+	commit, err := testRepo().Commit(sha)
 	testutils.Ok(t, err)
 
 	testutils.Equals(t, &expected, commit)
 }
 
 func TestGetCommitStack(t *testing.T) {
-  expectedCommitList := []GitSha{
+	expectedCommitList := []GitSha{
 		GitSha("21fcd46063d09b0e178619c37bf396beece3a8e2"),
 		GitSha("bb983db95a6067f1dbdb86d762763ad35ab8bcc2"),
 		GitSha("b91435bba4bba776634622252b3793afcb711910"),
-    // TODO: implement merge commit handling
+		// TODO: implement merge commit handling
 		// GitSha("22950c7aaaf4b990a1f69388f06a003a1462642d"),
 		// GitSha("5463cfb060336eb1c6328e6ac44cf4a68779e365"),
 		GitSha("f75d62306d0a8e5785b2c194817fcd4f0a3cb636"),
@@ -48,7 +48,7 @@ func TestGetCommitStack(t *testing.T) {
 		GitSha("e3164dbbad639e801183bb01a02ee7f356134644"),
 		GitSha("eeea1494ed65e09bb20d43bd3fc384a3e65da43a"),
 		GitSha("2c6bd14b0015249b232685b50ab69016e74cc775"),
-    // TODO: implement merge commit handling
+		// TODO: implement merge commit handling
 		// GitSha("153b856314764c5c4adada76156e2ef659539855"),
 		// GitSha("12d779c36d15b6c3ad10933d2feff359ed621795"),
 		GitSha("b0278993e6530a18de832a4a672ffa901b020553"),
@@ -59,7 +59,7 @@ func TestGetCommitStack(t *testing.T) {
 		GitSha("e3a6e7df49d6a563a45e80e94885d564d5794ec8"),
 		GitSha("9e807078c6dde2dfff8cd5d7f16ee2a6a3ed4944"),
 		GitSha("715c7c0717434e6251bd9c1a66a9796a3d999c6b"),
-    // TODO: Implement support for semi-linear merges
+		// TODO: Implement support for semi-linear merges
 		// GitSha("12d9f3894581c4a31edfe49bfe30ff7f29bc212e"),
 		GitSha("1f55ce276125be7990361281b72cb18dc69bea45"),
 		GitSha("93d3dacf4fa8247b0218080ccc85111301886ea5"),
@@ -77,12 +77,12 @@ func TestGetCommitStack(t *testing.T) {
 		GitSha("73dbba3bb3019647cdd11c58c14880644a28d25a"),
 		GitSha("b8c75b06f333bab05e895331f0b3c50853c27c6b"),
 		// GitSha("6051d4147870c34253b733e6cc668055247ddb95"),
-  }
+	}
 
-	sha, err := GetHead(TEST_REPO_BASE)
-  fmt.Println(sha)
+	sha, err := testRepo().Head()
+	fmt.Println(sha)
 	testutils.Ok(t, err)
-	commit, err := GetCommit(TEST_REPO_BASE, sha)
+	commit, err := testRepo().Commit(sha)
 	testutils.Ok(t, err)
 
 	commitList := []GitSha{sha}
@@ -90,16 +90,16 @@ func TestGetCommitStack(t *testing.T) {
 
 	// for commit.parent != "" {
 	for commit.parent != "6051d4147870c34253b733e6cc668055247ddb95" {
-	  sha = commit.parent
-    fmt.Println(sha)
-		commit, err = GetCommit(TEST_REPO_BASE, sha)
+		sha = commit.parent
+		fmt.Println(sha)
+		commit, err = testRepo().Commit(sha)
 		testutils.Ok(t, err)
 		commitList = append(commitList, sha)
 		commitMap[sha] = commit
 	}
-  fmt.Println("")
-  fmt.Println(commitList)
-  fmt.Println(commitMap[EXAMPLE_COMMIT.sha])
+	fmt.Println("")
+	fmt.Println(commitList)
+	fmt.Println(commitMap[EXAMPLE_COMMIT.sha])
 	testutils.Equals(t, &EXAMPLE_COMMIT.commit, commitMap[EXAMPLE_COMMIT.sha])
 	testutils.Equals(t, expectedCommitList, commitList)
 }

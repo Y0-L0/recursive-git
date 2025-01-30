@@ -5,17 +5,19 @@ import (
 	"testing"
 )
 
-const TEST_REPO_BASE = "./testdata/directory-importer/"
+func testRepo() Repo {
+	return NewRepo("./testdata/directory-importer/")
+}
 
 func TestGetHeadSuccess(t *testing.T) {
-	sha, err := GetHead(TEST_REPO_BASE)
+	sha, err := testRepo().Head()
 	testutils.Ok(t, err)
 
 	testutils.Equals(t, GitSha("21fcd46063d09b0e178619c37bf396beece3a8e2"), sha)
 }
 
 func TestGetHeadNoFile(t *testing.T) {
-	sha, err := getRef(TEST_REPO_BASE, "refs/invalid-location-heads/main")
+	sha, err := testRepo().ref("refs/invalid-location-heads/main")
 	testutils.Equals(t, GitSha(""), sha)
 
 	// TODO: Validate that the correct error is returned!
@@ -23,14 +25,14 @@ func TestGetHeadNoFile(t *testing.T) {
 }
 
 func TestGetRefSuccess(t *testing.T) {
-	sha, err := getRef(TEST_REPO_BASE, "refs/heads/main")
+	sha, err := testRepo().ref("refs/heads/main")
 	testutils.Ok(t, err)
 
 	testutils.Equals(t, GitSha("21fcd46063d09b0e178619c37bf396beece3a8e2"), sha)
 }
 
 func TestGetRefNoFile(t *testing.T) {
-	sha, err := getRef(TEST_REPO_BASE, "refs/invalid-location-heads/main")
+	sha, err := testRepo().ref("refs/invalid-location-heads/main")
 	testutils.Equals(t, GitSha(""), sha)
 
 	// TODO: Validate that the correct error is returned!
@@ -38,7 +40,7 @@ func TestGetRefNoFile(t *testing.T) {
 }
 
 func TestGetRefWrongContent(t *testing.T) {
-	sha, err := getRef(TEST_REPO_BASE, "HEAD")
+	sha, err := testRepo().ref("HEAD")
 	testutils.Equals(t, GitSha(""), sha)
 
 	// TODO: Validate that the correct error is returned!
