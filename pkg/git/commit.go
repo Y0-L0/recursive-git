@@ -6,19 +6,15 @@ import (
 	"strings"
 )
 
-func (repo *Repo) Commit(sha GitSha) (*Commit, error) {
-	object, err := getObject(repo.base, sha)
-	if err != nil {
-		return nil, err
-	}
-	commit, err := parseCommit(object)
-	if err != nil {
-		return nil, err
-	}
-	return commit, nil
+type Commit struct {
+	tree      GitSha
+	parent    GitSha
+	author    string
+	committer string
+	message   string
 }
 
-func parseCommit(object string) (*Commit, error) {
+func newCommit(object string) (*Commit, error) {
 	treeIndex := strings.Index(object, "\x00tree ")
 	parentIndex := strings.Index(object, "\nparent ")
 	authorIndex := strings.Index(object, "\nauthor ")
@@ -54,4 +50,16 @@ func parseCommit(object string) (*Commit, error) {
 
 	slog.Debug("Parsed commit", "commit", commit)
 	return &commit, nil
+}
+
+func (repo *Repo) Commit(sha GitSha) (*Commit, error) {
+	object, err := getObject(repo.base, sha)
+	if err != nil {
+		return nil, err
+	}
+	commit, err := newCommit(object)
+	if err != nil {
+		return nil, err
+	}
+	return commit, nil
 }

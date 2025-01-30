@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+type GitSha string
+
 type Repo struct {
 	commitCache map[GitSha]Commit
 	base string

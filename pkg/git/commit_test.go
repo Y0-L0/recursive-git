@@ -6,7 +6,7 @@ import (
 )
 
 func TestParseCommit(t *testing.T) {
-	commit, err := parseCommit(EXAMPLE_COMMIT.object)
+	commit, err := newCommit(EXAMPLE_COMMIT.object)
 	testutils.Ok(t, err)
 
 	testutils.Equals(t, &EXAMPLE_COMMIT.commit, commit)
