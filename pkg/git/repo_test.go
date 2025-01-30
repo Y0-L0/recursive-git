@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func testRepo() Repo {
+func testRepo() *Repo {
 	return NewRepo("./testdata/directory-importer/")
 }
 

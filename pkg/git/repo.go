@@ -7,18 +7,19 @@ import (
 )
 
 type Repo struct {
+	commitCache map[GitSha]Commit
 	base string
 	head GitSha
 }
 
-func NewRepo(base string) Repo {
-	return Repo{
-		base,
-		GitSha(""),
+func NewRepo(base string) *Repo {
+	return &Repo{
+		base: base,
+		head: GitSha(""),
 	}
 }
 
-func (repo Repo) Head() (GitSha, error) {
+func (repo *Repo) Head() (GitSha, error) {
 	if repo.head != GitSha("") {
 		return repo.head, nil
 	}
@@ -37,7 +38,7 @@ func (repo Repo) Head() (GitSha, error) {
 	return sha, nil
 }
 
-func (repo Repo) ref(ref string) (GitSha, error) {
+func (repo *Repo) ref(ref string) (GitSha, error) {
 	refPath := repo.base + ".git/" + ref
 	shaBytes, err := os.ReadFile(refPath)
 	if err != nil {
