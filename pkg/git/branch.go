@@ -1,5 +1,7 @@
 package git
 
+import "log/slog"
+
 type Branch struct {
 	head GitSha
 	repo *Repo
@@ -26,7 +28,7 @@ func (branch *Branch) Resolve() error {
 		return err
 	}
 
-	// TODO: remove hard stop and replace with "" parent
+	// TODO: Implement packed commit reading
 	// for commit.parent != "" {
 	for commit.parent != "6051d4147870c34253b733e6cc668055247ddb95" {
 		sha := commit.parent
@@ -37,5 +39,6 @@ func (branch *Branch) Resolve() error {
 		branch.List = append(branch.List, sha)
 		branch.set[sha] = true
 	}
+	slog.Debug("successfully resoved git branch", "commitList", branch.List)
 	return nil
 }
