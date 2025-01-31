@@ -11,6 +11,7 @@ type GitSha string
 
 type Repo struct {
 	commitCache map[GitSha]*Commit
+	branchCache map[string]*Branch
 	base        string
 	head        GitSha
 }
@@ -18,6 +19,7 @@ type Repo struct {
 func NewRepo(base string) *Repo {
 	return &Repo{
 		commitCache: make(map[GitSha]*Commit),
+		branchCache: make(map[string]*Branch),
 		base:        base,
 		head:        GitSha(""),
 	}
@@ -36,7 +38,7 @@ func (repo *Repo) Head() (GitSha, error) {
 
 	sha, err := repo.ref(refCleaned)
 	if err != nil {
-		return "wtf: ", err
+		return "", err
 	}
 	repo.head = sha
 	return sha, nil
@@ -58,6 +60,16 @@ func (repo *Repo) Commit(sha GitSha) (*Commit, error) {
 	}
 	repo.commitCache[sha] = commit
 	return commit, nil
+}
+
+func (repo *Repo) Branch(name string) (*Branch, error) {
+	sha, err := repo.ref("refs/heads/" + name)
+	if err != nil {
+		return nil, err
+	}
+	branch := newBranch(repo, sha)
+	repo.branchCache[name] = branch
+	return branch, nil
 }
 
 func (repo *Repo) ref(ref string) (GitSha, error) {
