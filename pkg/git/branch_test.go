@@ -79,27 +79,13 @@ func TestGetCommitStack(t *testing.T) {
 		// GitSha("6051d4147870c34253b733e6cc668055247ddb95"),
 	}
 
-	sha, err := testRepo().Head()
-	fmt.Println(sha)
+	branch, err := testRepo().HeadBranch()
 	testutils.Ok(t, err)
-	commit, err := testRepo().Commit(sha)
+	err = branch.Resolve()
 	testutils.Ok(t, err)
 
-	commitList := []GitSha{sha}
-	commitMap := map[GitSha]*Commit{sha: commit}
-
-	// for commit.parent != "" {
-	for commit.parent != "6051d4147870c34253b733e6cc668055247ddb95" {
-		sha = commit.parent
-		fmt.Println(sha)
-		commit, err = testRepo().Commit(sha)
-		testutils.Ok(t, err)
-		commitList = append(commitList, sha)
-		commitMap[sha] = commit
-	}
 	fmt.Println("")
-	fmt.Println(commitList)
-	fmt.Println(commitMap[EXAMPLE_COMMIT.sha])
-	testutils.Equals(t, &EXAMPLE_COMMIT.commit, commitMap[EXAMPLE_COMMIT.sha])
-	testutils.Equals(t, expectedCommitList, commitList)
+	fmt.Println(branch.List)
+	testutils.Equals(t, true, branch.In(EXAMPLE_COMMIT.sha))
+	testutils.Equals(t, expectedCommitList, branch.List)
 }
