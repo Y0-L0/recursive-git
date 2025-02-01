@@ -7,11 +7,12 @@ import (
 )
 
 type Commit struct {
-	tree      GitSha
-	parent    GitSha
-	author    string
-	committer string
-	message   string
+	tree        GitSha
+	parent      GitSha
+	mergeParent GitSha
+	author      string
+	committer   string
+	message     string
 }
 
 func newCommit(object string) (*Commit, error) {
@@ -23,26 +24,27 @@ func newCommit(object string) (*Commit, error) {
 
 	slog.Debug("Commit string parsing indexes", "treeIndex", treeIndex, "parentIndex", parentIndex, "authorIndex", authorIndex, "committerIndex", committerIndex, "messageIndex", messageIndex)
 
-	var parents []string
-	var parent string
-	substring := object[parentIndex:]
-
-	for substring[:8] == "\nparent " {
-		parent = substring[8:48]
-		parents = append(parents, parent)
-		substring = substring[48:]
-	}
-
-	slog.Debug("Commit string parsing results", "parents", parents, "substring", substring)
-
 	if treeIndex == -1 || parentIndex == -1 || authorIndex == -1 || committerIndex == -1 || messageIndex == -1 {
 		slog.Warn("Commit message parsing failed", "commit", object)
 		return nil, fmt.Errorf("failed to split commit string:\n%s", object)
 	}
 
+	parentIndex = parentIndex + 8
+	parent := object[parentIndex : parentIndex+40]
+	mergeParent := ""
+	parentIndex = parentIndex + 48
+	if object[parentIndex-8:parentIndex] == "\nparent " {
+		mergeParent = object[parentIndex : parentIndex+40]
+	}
+	parentIndex = parentIndex + 40
+	if object[parentIndex:parentIndex+8] == "\nparent " {
+		panic("Multiple merge parents are not supported at this stage")
+	}
+
 	commit := Commit{
 		GitSha(object[treeIndex+6 : treeIndex+6+40]),
 		GitSha(parent),
+		GitSha(mergeParent),
 		object[authorIndex+8 : committerIndex],
 		object[committerIndex+11 : messageIndex],
 		object[messageIndex+2:],

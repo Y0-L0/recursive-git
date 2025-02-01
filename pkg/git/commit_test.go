@@ -19,6 +19,16 @@ func TestGetCommit(t *testing.T) {
 	testutils.Equals(t, &EXAMPLE_COMMIT.commit, commit)
 }
 
+func TestGetMergeCommit(t *testing.T) {
+	expectedParent := GitSha("22950c7aaaf4b990a1f69388f06a003a1462642d")
+	expectedMergeParent := GitSha("b91435bba4bba776634622252b3793afcb711910")
+	commit, err := testRepo().Commit(GitSha("bb983db95a6067f1dbdb86d762763ad35ab8bcc2"))
+	testutils.Ok(t, err)
+
+	testutils.Equals(t, expectedParent, commit.parent)
+	testutils.Equals(t, expectedMergeParent, commit.mergeParent)
+}
+
 var parentTests = []struct {
 	id     string
 	sha    GitSha
@@ -27,7 +37,7 @@ var parentTests = []struct {
 	{
 		"Normal Commit",
 		GitSha("22950c7aaaf4b990a1f69388f06a003a1462642d"),
-		GitSha("5463cfb060336eb1c6328e6ac44cf4a68779e365"),
+		GitSha("6618d60463ce243f51127c3fe8ee16c960c93e07"),
 	},
 	// TODO: implement merge commit handling
 	// {
@@ -62,6 +72,7 @@ func TestGetPackedInitialCommit(t *testing.T) {
 	expected := Commit{
 		GitSha("b84acc25f4463b7cdaae512efdac761eac4c9c59"),
 		GitSha("5463cfb060336eb1c6328e6ac44cf4a68779e365"),
+		GitSha(""),
 		"Carlos García-Mauriño Dueñas <garcia-maurino@univention.de> 1737124337 +0100",
 		"Carlos García-Mauriño Dueñas <garcia-maurino@univention.de> 1737124337 +0100",
 		"Merge branch 'cgarcia/load-tests' into 'main'\n\ntest: load tests\n\nSee merge request univention/customers/dataport/upx/directory-importer!5",
