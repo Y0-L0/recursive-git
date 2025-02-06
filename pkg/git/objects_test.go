@@ -18,6 +18,7 @@ var EXAMPLE_COMMIT = struct {
 		GitSha(""),
 		"Johannes Lohmer <lohmer@univention.de> 1736442888 +0100",
 		"Johannes Lohmer <lohmer@univention.de> 1736443347 +0100",
+		1736443347,
 		"test: Create and delete the example.org maildomain as part of every testrun with an autouse fixture\n",
 	},
 }

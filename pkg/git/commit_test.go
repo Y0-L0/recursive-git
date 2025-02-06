@@ -43,12 +43,12 @@ var parentTests = []struct {
 	// {
 	// "Merge Commit 1",
 	//  GitSha("b91435bba4bba776634622252b3793afcb711910"),
-	//   GitSha("22950c7aaaf4b990a1f69388f06a003a1462642d"),
+	//  GitSha("22950c7aaaf4b990a1f69388f06a003a1462642d"),
 	// },
 	// {
 	// "Merge Commit 2",
 	//  GitSha("2c6bd14b0015249b232685b50ab69016e74cc775"),
-	//   GitSha("153b856314764c5c4adada76156e2ef659539855"),
+	//  GitSha("153b856314764c5c4adada76156e2ef659539855"),
 	// },
 }
 
@@ -75,6 +75,7 @@ func TestGetPackedInitialCommit(t *testing.T) {
 		GitSha(""),
 		"Carlos García-Mauriño Dueñas <garcia-maurino@univention.de> 1737124337 +0100",
 		"Carlos García-Mauriño Dueñas <garcia-maurino@univention.de> 1737124337 +0100",
+		0,
 		"Merge branch 'cgarcia/load-tests' into 'main'\n\ntest: load tests\n\nSee merge request univention/customers/dataport/upx/directory-importer!5",
 	}
 

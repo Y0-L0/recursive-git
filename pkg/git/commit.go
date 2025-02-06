@@ -3,16 +3,18 @@ package git
 import (
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 )
 
 type Commit struct {
-	tree        GitSha
-	parent      GitSha
-	mergeParent GitSha
-	author      string
-	committer   string
-	message     string
+	tree           GitSha
+	parent         GitSha
+	mergeParent    GitSha
+	author         string
+	committer      string
+	committerEpoch int
+	message        string
 }
 
 func newCommit(object string) (*Commit, error) {
@@ -23,6 +25,14 @@ func newCommit(object string) (*Commit, error) {
 	messageIndex := strings.Index(object, "\n\n")
 
 	slog.Debug("Commit string parsing indexes", "treeIndex", treeIndex, "parentIndex", parentIndex, "authorIndex", authorIndex, "committerIndex", committerIndex, "messageIndex", messageIndex)
+
+	committer := object[committerIndex+11 : messageIndex]
+	epochEnd := strings.LastIndex(committer, " ")
+	epochStart := strings.LastIndex(committer[:epochEnd], " ") + 1
+	committerEpoch, err := strconv.Atoi(committer[epochStart:epochEnd])
+	if err != nil {
+		return nil, err
+	}
 
 	if treeIndex == -1 || parentIndex == -1 || authorIndex == -1 || committerIndex == -1 || messageIndex == -1 {
 		slog.Warn("Commit message parsing failed", "commit", object)
@@ -42,12 +52,13 @@ func newCommit(object string) (*Commit, error) {
 	}
 
 	commit := Commit{
-		GitSha(object[treeIndex+6 : treeIndex+6+40]),
-		GitSha(parent),
-		GitSha(mergeParent),
-		object[authorIndex+8 : committerIndex],
-		object[committerIndex+11 : messageIndex],
-		object[messageIndex+2:],
+		tree:           GitSha(object[treeIndex+6 : treeIndex+6+40]),
+		parent:         GitSha(parent),
+		mergeParent:    GitSha(mergeParent),
+		author:         object[authorIndex+8 : committerIndex],
+		committer:      committer,
+		committerEpoch: committerEpoch,
+		message:        object[messageIndex+2:],
 	}
 
 	slog.Debug("Parsed commit", "commit", commit)
