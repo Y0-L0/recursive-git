@@ -66,8 +66,51 @@ func (branch *Branch) getParents(sha GitSha) ([]GitSha, error) {
 	slog.Warn("resolved parents", "sha", sha, "mergeParents", mergeParents, "parents", parents)
 
 	result := []GitSha{sha}
-	result = append(result, mergeParents...)
-	result = append(result, parents...)
+	result = append(result, branch.mergeParentArrays(parents, mergeParents)...)
 
 	return result, nil
+}
+
+func (branch *Branch) mergeParentArrays(parents []GitSha, mergeParents []GitSha) []GitSha {
+	if len(mergeParents) == 0 {
+		return parents
+	}
+
+	parentIndex := 0
+	maxParentIndex := len(parents)
+	mergeParentIndex := 0
+	maxMergeParentIndex := len(mergeParents)
+
+	var result []GitSha
+
+	for parentIndex < maxParentIndex && mergeParentIndex < maxMergeParentIndex {
+		parentCommit, err := branch.repo.Commit(parents[parentIndex])
+		if err != nil {
+			panic("Git commit database or cache got corrupted")
+		}
+		mergeParentCommit, err := branch.repo.Commit(parents[parentIndex])
+		if err != nil {
+			panic("Git commit database or cache got corrupted")
+		}
+
+		if parentCommit.committerEpoch < mergeParentCommit.committerEpoch {
+			result = append(result, parents[parentIndex])
+			parentIndex++
+		} else {
+			result = append(result, mergeParents[mergeParentIndex])
+			mergeParentIndex++
+		}
+	}
+	if parentIndex == maxParentIndex {
+		result = append(result, mergeParents[mergeParentIndex:]...)
+	} else if mergeParentIndex == maxMergeParentIndex {
+		result = append(result, parents[parentIndex:]...)
+	} else {
+		slog.Error("Logic error in mergeParentArrays", "parentIndex", parentIndex, "maxParentIndex", maxParentIndex, "mergeParentIndex", mergeParentIndex, "maxMergeParentIndex", maxMergeParentIndex, "parents", parents, "mergeParents", mergeParents)
+		panic("impossible ")
+	}
+
+	slog.Debug("Final state of mergeParents", "parentIndex", parentIndex, "maxParentIndex", maxParentIndex, "mergeParentIndex", mergeParentIndex, "maxMergeParentIndex", maxMergeParentIndex, "parents", parents, "mergeParents", mergeParents)
+	slog.Info("Merged parents", "result", result)
+	return result
 }

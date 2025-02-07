@@ -10,7 +10,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	SetupLogging(slog.LevelInfo)
+	// SetupLogging(slog.LevelInfo)
+	SetupLogging(slog.LevelDebug)
 	code := m.Run()
 	os.Exit(code)
 	slog.Debug("tests starting")
