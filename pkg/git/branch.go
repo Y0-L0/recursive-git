@@ -1,8 +1,25 @@
 package git
 
 import (
+	"iter"
 	"log/slog"
+	"slices"
+	"sort"
 )
+
+type commitSlice []*Commit
+
+func (cs commitSlice) Insert(commit *Commit) commitSlice {
+	index := sort.Search(len(cs), func(i int) bool {
+		return cs[i].committerEpoch > commit.committerEpoch
+	})
+	return slices.Insert(cs, index, commit)
+}
+
+func (cs commitSlice) Pop() (commitSlice, *Commit) {
+	result := cs[len(cs)-1]
+	return cs[:len(cs)-1], result
+}
 
 type Branch struct {
 	head GitSha
@@ -24,17 +41,58 @@ func (branch *Branch) In(sha GitSha) bool {
 	return branch.set[sha]
 }
 
-func (branch *Branch) Resolve() error {
-	list, err := branch.getParents(branch.head)
+func (branch *Branch) ResolveIterator() error {
+	list, err := branch.getParentsRecursively(branch.head)
 	if err != nil {
 		return err
 	}
-	slog.Debug("successfully resoved git branch", "commitList", list)
+	slog.Debug("successfully resoved git branch using iterators", "commitList", list)
 	branch.List = list
 	return nil
 }
 
-func (branch *Branch) getParents(sha GitSha) ([]GitSha, error) {
+func (branch *Branch) ResolveRecursively() error {
+	list, err := branch.getParentsRecursively(branch.head)
+	if err != nil {
+		return err
+	}
+	slog.Debug("successfully resoved git branch using recursion", "commitList", list)
+	branch.List = list
+	return nil
+}
+
+func (branch *Branch) parents(commit *Commit) iter.Seq2[GitSha, error] {
+	stack := commitSlice{commit}
+	return func(yield func(GitSha, error) bool) {
+		for len(stack) != 0 {
+			stack, currentCommit := stack.Pop()
+			slog.Debug("Removed element from slice", "new length", len(stack))
+			parent, err := branch.repo.Commit(currentCommit.parent)
+			if err != nil {
+				if !yield(GitSha(""), err) {
+					return
+				}
+			}
+			stack = stack.Insert(parent)
+			slog.Debug("Inserted element into slice", "new length", len(stack))
+			if currentCommit.mergeParent != GitSha("") {
+				mergeParent, err := branch.repo.Commit(commit.mergeParent)
+				if err != nil {
+					if !yield(GitSha(""), err) {
+						return
+					}
+				}
+				stack = stack.Insert(mergeParent)
+				slog.Debug("Inserted element into slice", "new length", len(stack))
+			}
+			if !yield(stack[len(stack)-1].sha, nil) {
+				return
+			}
+		}
+	}
+}
+
+func (branch *Branch) getParentsRecursively(sha GitSha) ([]GitSha, error) {
 	slog.Debug("resolved parent", "sha", sha)
 
 	if branch.set[sha] {
@@ -51,14 +109,14 @@ func (branch *Branch) getParents(sha GitSha) ([]GitSha, error) {
 		return nil, err
 	}
 
-	parents, err := branch.getParents(commit.parent)
+	parents, err := branch.getParentsRecursively(commit.parent)
 	if err != nil {
 		return nil, err
 	}
 	var mergeParents []GitSha
 
 	if commit.mergeParent != GitSha("") {
-		mergeParents, err = branch.getParents(commit.mergeParent)
+		mergeParents, err = branch.getParentsRecursively(commit.mergeParent)
 		if err != nil {
 			return nil, err
 		}

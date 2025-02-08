@@ -65,7 +65,7 @@ func (repo *Repo) Commit(sha GitSha) (*Commit, error) {
 	if err != nil {
 		return nil, err
 	}
-	commit, err = newCommit(object)
+	commit, err = newCommit(sha, object)
 	if err != nil {
 		return nil, err
 	}

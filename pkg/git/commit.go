@@ -8,6 +8,7 @@ import (
 )
 
 type Commit struct {
+	sha            GitSha
 	tree           GitSha
 	parent         GitSha
 	mergeParent    GitSha
@@ -17,7 +18,7 @@ type Commit struct {
 	message        string
 }
 
-func newCommit(object string) (*Commit, error) {
+func newCommit(sha GitSha, object string) (*Commit, error) {
 	treeIndex := strings.Index(object, "\x00tree ")
 	parentIndex := strings.Index(object, "\nparent ")
 	authorIndex := strings.Index(object, "\nauthor ")
@@ -52,6 +53,7 @@ func newCommit(object string) (*Commit, error) {
 	}
 
 	commit := Commit{
+		sha:            sha,
 		tree:           GitSha(object[treeIndex+6 : treeIndex+6+40]),
 		parent:         GitSha(parent),
 		mergeParent:    GitSha(mergeParent),
