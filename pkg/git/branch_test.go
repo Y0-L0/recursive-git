@@ -2,22 +2,9 @@ package git
 
 import (
 	"fmt"
-	"log/slog"
-	"os"
-	"testing"
-
-	"github.com/Y0-L0/recursive-git/testutils"
 )
 
-func TestMain(m *testing.M) {
-	// SetupLogging(slog.LevelInfo)
-	SetupLogging(slog.LevelDebug)
-	code := m.Run()
-	os.Exit(code)
-	slog.Debug("tests starting")
-}
-
-func TestGetHead(t *testing.T) {
+func (suite *GitTest) TestGetHead() {
 	expected := Commit{
 		tree:           "a69a5d10edd8bf796288405de4da843ce5c17238",
 		parent:         "bb983db95a6067f1dbdb86d762763ad35ab8bcc2",
@@ -28,14 +15,14 @@ func TestGetHead(t *testing.T) {
 	}
 
 	sha, err := testRepo().Head()
-	testutils.Ok(t, err)
+	suite.NoError(err)
 	commit, err := testRepo().Commit(sha)
-	testutils.Ok(t, err)
+	suite.NoError(err)
 
-	testutils.Equals(t, &expected, commit)
+	suite.Equal(&expected, commit)
 }
 
-func TestResolveMergeCommits(t *testing.T) {
+func (suite *GitTest) TestResolveMergeCommits() {
 	expected := []GitSha{
 		GitSha("bb983db95a6067f1dbdb86d762763ad35ab8bcc2"),
 		GitSha("b91435bba4bba776634622252b3793afcb711910"),
@@ -51,11 +38,11 @@ func TestResolveMergeCommits(t *testing.T) {
 	branch := newBranch(testRepo(), expected[0])
 
 	err := branch.Resolve()
-	testutils.Ok(t, err)
+	suite.NoError(err)
 
 	fmt.Println(len(branch.List))
-	testutils.Equals(t, 39, len(branch.List))
-	testutils.Equals(t, expected, branch.List[:6])
+	suite.Equal(39, len(branch.List))
+	suite.Equal(expected, branch.List[:6])
 }
 
 var expectedCommitList = []GitSha{
@@ -106,22 +93,22 @@ var expectedCommitList = []GitSha{
 	GitSha("6051d4147870c34253b733e6cc668055247ddb95"),
 }
 
-func TestResolveHeadBranch(t *testing.T) {
+func (suite *GitTest) TestResolveHeadBranch() {
 	branch, err := testRepo().HeadBranch()
-	testutils.Ok(t, err)
+	suite.NoError(err)
 	err = branch.Resolve()
-	testutils.Ok(t, err)
+	suite.NoError(err)
 
-	testutils.Equals(t, true, branch.In(EXAMPLE_COMMIT.sha))
-	testutils.Equals(t, expectedCommitList, branch.List)
+	suite.Equal(true, branch.In(EXAMPLE_COMMIT.sha))
+	suite.Equal(expectedCommitList, branch.List)
 }
 
-func TestResolveBranch(t *testing.T) {
+func (suite *GitTest) TestResolveBranch() {
 	branch, err := testRepo().Branch("main")
-	testutils.Ok(t, err)
+	suite.NoError(err)
 	err = branch.Resolve()
-	testutils.Ok(t, err)
+	suite.NoError(err)
 
-	testutils.Equals(t, true, branch.In(EXAMPLE_COMMIT.sha))
-	testutils.Equals(t, expectedCommitList, branch.List)
+	suite.Equal(true, branch.In(EXAMPLE_COMMIT.sha))
+	suite.Equal(expectedCommitList, branch.List)
 }

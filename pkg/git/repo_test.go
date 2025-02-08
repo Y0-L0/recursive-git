@@ -1,61 +1,56 @@
 package git
 
-import (
-	"github.com/Y0-L0/recursive-git/testutils"
-	"testing"
-)
-
 func testRepo() *Repo {
 	return NewRepo("./testdata/directory-importer/")
 }
 
-func TestGetHeadSuccess(t *testing.T) {
+func (suite *GitTest) TestGetHeadSuccess() {
 	sha, err := testRepo().Head()
-	testutils.Ok(t, err)
+	suite.NoError(err)
 
-	testutils.Equals(t, GitSha("21fcd46063d09b0e178619c37bf396beece3a8e2"), sha)
+	suite.Equal(GitSha("21fcd46063d09b0e178619c37bf396beece3a8e2"), sha)
 }
 
-func TestGetHeadNoFile(t *testing.T) {
+func (suite *GitTest) TestGetHeadNoFile() {
 	sha, err := testRepo().ref("refs/invalid-location-heads/main")
-	testutils.Equals(t, GitSha(""), sha)
+	suite.Equal(GitSha(""), sha)
 
 	// TODO: Validate that the correct error is returned!
-	testutils.Assert(t, err != nil, "Expeced a file not found error but got nil")
+	suite.Error(err, "Expeced a file not found error but got nil")
 }
 
-func TestGetRefSuccess(t *testing.T) {
+func (suite *GitTest) TestGetRefSuccess() {
 	sha, err := testRepo().ref("refs/heads/main")
-	testutils.Ok(t, err)
+	suite.NoError(err)
 
-	testutils.Equals(t, GitSha("21fcd46063d09b0e178619c37bf396beece3a8e2"), sha)
+	suite.Equal(GitSha("21fcd46063d09b0e178619c37bf396beece3a8e2"), sha)
 }
 
-func TestGetRefNoFile(t *testing.T) {
+func (suite *GitTest) TestGetRefNoFile() {
 	sha, err := testRepo().ref("refs/invalid-location-heads/main")
-	testutils.Equals(t, GitSha(""), sha)
+	suite.Equal(GitSha(""), sha)
 
 	// TODO: Validate that the correct error is returned!
-	testutils.Assert(t, err != nil, "Expeced a file not found error but got nil")
+	suite.Error(err, "Expeced a file not found error but got nil")
 }
 
-func TestGetRefWrongContent(t *testing.T) {
+func (suite *GitTest) TestGetRefWrongContent() {
 	sha, err := testRepo().ref("HEAD")
-	testutils.Equals(t, GitSha(""), sha)
+	suite.Equal(GitSha(""), sha)
 
 	// TODO: Validate that the correct error is returned!
-	testutils.Assert(t, err != nil, "Expected an InvalidContent error but got nil")
+	suite.Error(err, "Expected an InvalidContent error but got nil")
 }
 
-func TestCommitCaching(t *testing.T) {
+func (suite *GitTest) TestCommitCaching() {
 	repo := testRepo()
 	commit, err := repo.Commit(EXAMPLE_COMMIT.sha)
-	testutils.Ok(t, err)
+	suite.NoError(err)
 
 	commit1, err := repo.Commit(EXAMPLE_COMMIT.sha)
-	testutils.Ok(t, err)
+	suite.NoError(err)
 
 	if commit != commit1 {
-		t.Fatalf("\nexp: %p\ngot: %p", commit, commit1)
+		suite.Fail("\nexp: %p\ngot: %p", commit, commit1)
 	}
 }

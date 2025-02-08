@@ -1,10 +1,5 @@
 package git
 
-import (
-	"github.com/Y0-L0/recursive-git/testutils"
-	"testing"
-)
-
 var EXAMPLE_COMMIT = struct {
 	sha    GitSha
 	object string
@@ -23,9 +18,9 @@ var EXAMPLE_COMMIT = struct {
 	},
 }
 
-func TestGetObject(t *testing.T) {
+func (suite *GitTest) TestGetObject() {
 	obj, err := getObject(testRepo().base, EXAMPLE_COMMIT.sha)
-	testutils.Ok(t, err)
+	suite.NoError(err)
 
-	testutils.Equals(t, EXAMPLE_COMMIT.object, obj)
+	suite.Equal(EXAMPLE_COMMIT.object, obj)
 }
