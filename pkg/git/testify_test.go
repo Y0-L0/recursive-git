@@ -26,7 +26,7 @@ func (ls *LoggingSuite) SetupTest() {
 }
 
 func (loggingSuite *LoggingSuite) TearDownTest() {
-	if !loggingSuite.T().Failed() {
+	if !loggingSuite.T().Failed() || !testing.Verbose() {
 		return
 	}
 	loggingSuite.T().Log("=== Captured Production Logs ===\n")
