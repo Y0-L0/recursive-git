@@ -1,27 +1,16 @@
 package git
 
 import (
-	"fmt"
 	"iter"
 )
 
 func (suite *GitTest) TestGetHead() {
-	expected := Commit{
-		sha:            "21fcd46063d09b0e178619c37bf396beece3a8e2",
-		tree:           "a69a5d10edd8bf796288405de4da843ce5c17238",
-		parent:         "bb983db95a6067f1dbdb86d762763ad35ab8bcc2",
-		author:         "@semantic-release-bot <semantic-release-bot@univention.de> 1737362940 +0000",
-		committer:      "@semantic-release-bot <semantic-release-bot@univention.de> 1737362940 +0000",
-		committerEpoch: 1737362940,
-		message:        "chore(release): 0.1.0 [skip ci]\n\n## [0.1.0](https://git.knut.univention.de/univention/customers/dataport/upx/directory-importer/compare/v0.0.2...v0.1.0) (2025-01-20)\n\n### Features\n\n* standard nubus logging setup ([f75d623](https://git.knut.univention.de/univention/customers/dataport/upx/directory-importer/commit/f75d62306d0a8e5785b2c194817fcd4f0a3cb636))\n",
-	}
+	expected := GitSha("21fcd46063d09b0e178619c37bf396beece3a8e2")
 
 	sha, err := testRepo().Head()
 	suite.NoError(err)
-	commit, err := testRepo().Commit(sha)
-	suite.NoError(err)
 
-	suite.Equal(&expected, commit)
+	suite.Equal(expected, sha)
 }
 
 var parentTests = []struct {
@@ -31,28 +20,28 @@ var parentTests = []struct {
 }{
 	{
 		"Normal Commit 1",
-		GitSha("9ddf53c84ad5316dc2aaf2aebedf84bbb3024169"),
-		GitSha("6618d60463ce243f51127c3fe8ee16c960c93e07"),
+		"9ddf53c84ad5316dc2aaf2aebedf84bbb3024169",
+		"6618d60463ce243f51127c3fe8ee16c960c93e07",
 	},
 	{
 		"Normal Commit 2",
-		GitSha("6618d60463ce243f51127c3fe8ee16c960c93e07"),
-		GitSha("180de10c4dbe4ed55efd52d5ff9d123a688f3d95"),
+		"6618d60463ce243f51127c3fe8ee16c960c93e07",
+		"180de10c4dbe4ed55efd52d5ff9d123a688f3d95",
 	},
 	{
 		"Normal Commit 3",
-		GitSha("b91435bba4bba776634622252b3793afcb711910"),
-		GitSha("f75d62306d0a8e5785b2c194817fcd4f0a3cb636"),
+		"b91435bba4bba776634622252b3793afcb711910",
+		"f75d62306d0a8e5785b2c194817fcd4f0a3cb636",
 	},
 	{
 		"Normal Commit 4",
-		GitSha("2c6bd14b0015249b232685b50ab69016e74cc775"),
-		GitSha("b0278993e6530a18de832a4a672ffa901b020553"),
+		"2c6bd14b0015249b232685b50ab69016e74cc775",
+		"b0278993e6530a18de832a4a672ffa901b020553",
 	},
 	{
 		"Merge Commit 1",
-		GitSha("22950c7aaaf4b990a1f69388f06a003a1462642d"),
-		GitSha("5463cfb060336eb1c6328e6ac44cf4a68779e365"),
+		"22950c7aaaf4b990a1f69388f06a003a1462642d",
+		"5463cfb060336eb1c6328e6ac44cf4a68779e365",
 	},
 }
 
@@ -62,7 +51,7 @@ func (suite *GitTest) correctParent(sha GitSha, expectedParent GitSha) {
 	commit, err := branch.repo.Commit(sha)
 	suite.NoError(err)
 
-	next, stop := iter.Pull2[GitSha, error](branch.parents(commit))
+	next, stop := iter.Pull2(branch.parents(commit))
 
 	actualParent, err, valid := next()
 	stop()
@@ -71,6 +60,106 @@ func (suite *GitTest) correctParent(sha GitSha, expectedParent GitSha) {
 	suite.Equal(valid, true)
 
 	suite.Equal(expectedParent, actualParent)
+}
+
+func (suite *GitTest) TestGetTwoParents() {
+
+	expectedParents := []GitSha{
+		GitSha("b91435bba4bba776634622252b3793afcb711910"),
+		GitSha("22950c7aaaf4b990a1f69388f06a003a1462642d"),
+	}
+
+	branch := newBranch(testRepo(), GitSha(""))
+
+	commit, err := branch.repo.Commit("bb983db95a6067f1dbdb86d762763ad35ab8bcc2")
+	suite.NoError(err)
+
+	next, stop := iter.Pull2(branch.parents(commit))
+
+	var parents []GitSha
+
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+
+	stop()
+
+	suite.Equal(expectedParents, parents)
+}
+
+func (suite *GitTest) TestGetMoreParents() {
+
+	expectedParents := []GitSha{
+		"b91435bba4bba776634622252b3793afcb711910",
+		"22950c7aaaf4b990a1f69388f06a003a1462642d",
+		"5463cfb060336eb1c6328e6ac44cf4a68779e365",
+		"f75d62306d0a8e5785b2c194817fcd4f0a3cb636",
+		"9ddf53c84ad5316dc2aaf2aebedf84bbb3024169",
+	}
+
+	branch := newBranch(testRepo(), GitSha(""))
+
+	commit, err := branch.repo.Commit("bb983db95a6067f1dbdb86d762763ad35ab8bcc2")
+	suite.NoError(err)
+
+	next, stop := iter.Pull2(branch.parents(commit))
+
+	var parents []GitSha
+
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+
+	stop()
+
+	suite.Equal(expectedParents, parents)
+}
+
+func (suite *GitTest) TestGetManyParents() {
+
+	expectedParents := []GitSha{
+		"b91435bba4bba776634622252b3793afcb711910",
+		"22950c7aaaf4b990a1f69388f06a003a1462642d",
+		"5463cfb060336eb1c6328e6ac44cf4a68779e365",
+		"f75d62306d0a8e5785b2c194817fcd4f0a3cb636",
+		"9ddf53c84ad5316dc2aaf2aebedf84bbb3024169",
+		"6618d60463ce243f51127c3fe8ee16c960c93e07",
+		"180de10c4dbe4ed55efd52d5ff9d123a688f3d95",
+		"d9f9b1712cff9c17f82118e8e40ceb29ceeb1187",
+		"e3164dbbad639e801183bb01a02ee7f356134644",
+	}
+
+	branch := newBranch(testRepo(), GitSha(""))
+
+	commit, err := branch.repo.Commit("bb983db95a6067f1dbdb86d762763ad35ab8bcc2")
+	suite.NoError(err)
+
+	next, stop := iter.Pull2(branch.parents(commit))
+
+	var parents []GitSha
+
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+	parents = append(parents, getNext(suite, next))
+
+	stop()
+
+	suite.Equal(expectedParents, parents)
+}
+
+func getNext(suite *GitTest, next func() (GitSha, error, bool)) GitSha {
+	result, err, valid := next()
+	suite.NoError(err)
+	suite.Equal(valid, true)
+
+	return result
 }
 
 func (suite *GitTest) TestGetParentFromIterator() {
@@ -83,25 +172,21 @@ func (suite *GitTest) TestGetParentFromIterator() {
 
 func (suite *GitTest) TestResolveMergeCommits() {
 	expected := []GitSha{
-		GitSha("bb983db95a6067f1dbdb86d762763ad35ab8bcc2"),
-		GitSha("b91435bba4bba776634622252b3793afcb711910"),
-		// TODO: Wrong order
-		GitSha("f75d62306d0a8e5785b2c194817fcd4f0a3cb636"),
-		GitSha("9ddf53c84ad5316dc2aaf2aebedf84bbb3024169"),
-		GitSha("22950c7aaaf4b990a1f69388f06a003a1462642d"),
-		GitSha("5463cfb060336eb1c6328e6ac44cf4a68779e365"),
-		// GitSha("f75d62306d0a8e5785b2c194817fcd4f0a3cb636"),
-		// GitSha("9ddf53c84ad5316dc2aaf2aebedf84bbb3024169"),
+		"bb983db95a6067f1dbdb86d762763ad35ab8bcc2",
+		"b91435bba4bba776634622252b3793afcb711910",
+		"22950c7aaaf4b990a1f69388f06a003a1462642d",
+		"5463cfb060336eb1c6328e6ac44cf4a68779e365",
+		"f75d62306d0a8e5785b2c194817fcd4f0a3cb636",
+		"9ddf53c84ad5316dc2aaf2aebedf84bbb3024169",
 	}
 
 	branch := newBranch(testRepo(), expected[0])
 
-	err := branch.ResolveRecursively()
-	suite.NoError(err)
+	err := branch.ResolveIterator()
+	suite.Require().NoError(err)
 
-	fmt.Println(len(branch.List))
-	suite.Equal(39, len(branch.List))
-	suite.Equal(expected, branch.List[:6])
+	suite.Require().Equal(39, len(branch.List))
+	suite.Require().Equal(expected, branch.List[:6])
 }
 
 var expectedCommitList = []GitSha{

@@ -1,6 +1,6 @@
 module github.com/Y0-L0/recursive-git
 
-go 1.21.3
+go 1.23.6
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

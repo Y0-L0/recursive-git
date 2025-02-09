@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"iter"
 	"log/slog"
 	"slices"
@@ -42,10 +43,20 @@ func (branch *Branch) In(sha GitSha) bool {
 }
 
 func (branch *Branch) ResolveIterator() error {
-	list, err := branch.getParentsRecursively(branch.head)
+
+	commit, err := branch.repo.Commit(branch.head)
 	if err != nil {
 		return err
 	}
+
+	list := []GitSha{branch.head}
+	for sha, err := range branch.parents(commit) {
+		if err != nil {
+			return err
+		}
+		list = append(list, sha)
+	}
+
 	slog.Debug("successfully resoved git branch using iterators", "commitList", list)
 	branch.List = list
 	return nil
@@ -63,27 +74,50 @@ func (branch *Branch) ResolveRecursively() error {
 
 func (branch *Branch) parents(commit *Commit) iter.Seq2[GitSha, error] {
 	stack := commitSlice{commit}
+	counter := 0
+
+	resolveParent := func(sha GitSha) error {
+		if sha != "" && !branch.set[sha] {
+			branch.set[sha] = true
+			commit, err := branch.repo.Commit(sha)
+			if err != nil {
+				return err
+			}
+			stack = stack.Insert(commit)
+			slog.Debug("Inserted (merge) parent into commit stack", "new length", len(stack), "sha", sha, "stack", stack)
+		}
+		return nil
+	}
+
 	return func(yield func(GitSha, error) bool) {
 		for len(stack) != 0 {
-			stack, currentCommit := stack.Pop()
-			slog.Debug("Removed element from slice", "new length", len(stack))
-			parent, err := branch.repo.Commit(currentCommit.parent)
+			counter++
+			if counter >= 50 {
+				slog.Error("infinite loop protection")
+				return
+			}
+
+			currentCommit := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			slog.Debug("Removed element from commit stack", "new length", len(stack), "currentCommit", currentCommit.sha, "stack", stack)
+
+			err := resolveParent(currentCommit.parent)
 			if err != nil {
 				if !yield(GitSha(""), err) {
 					return
 				}
 			}
-			stack = stack.Insert(parent)
-			slog.Debug("Inserted element into slice", "new length", len(stack))
-			if currentCommit.mergeParent != GitSha("") {
-				mergeParent, err := branch.repo.Commit(commit.mergeParent)
-				if err != nil {
-					if !yield(GitSha(""), err) {
-						return
-					}
+
+			err = resolveParent(currentCommit.mergeParent)
+			if err != nil {
+				if !yield(GitSha(""), err) {
+					return
 				}
-				stack = stack.Insert(mergeParent)
-				slog.Debug("Inserted element into slice", "new length", len(stack))
+			}
+
+			if len(stack) == 0 {
+				fmt.Print("Finished")
+				return
 			}
 			if !yield(stack[len(stack)-1].sha, nil) {
 				return

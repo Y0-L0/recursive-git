@@ -45,6 +45,9 @@ func (repo *Repo) Head() (GitSha, error) {
 }
 
 func (repo *Repo) Commit(sha GitSha) (*Commit, error) {
+	if len(sha) != 40 {
+		return nil, fmt.Errorf("invalid git sha: %s", sha)
+	}
 	if sha == GitSha("6051d4147870c34253b733e6cc668055247ddb95") {
 		return &Commit{
 			tree:           "08b2e1fff3055dd4ea54b88dcfed74023cb115f4",
