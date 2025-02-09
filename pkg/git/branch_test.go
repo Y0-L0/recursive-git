@@ -45,6 +45,14 @@ var parentTests = []struct {
 	},
 }
 
+func (suite *GitTest) TestGetParentFromIterator() {
+	for _, testCase := range parentTests {
+		suite.Run(testCase.id, func() {
+			suite.correctParent(testCase.sha, testCase.parent)
+		})
+	}
+}
+
 func (suite *GitTest) correctParent(sha GitSha, expectedParent GitSha) {
 	branch := newBranch(testRepo(), GitSha(""))
 
@@ -52,12 +60,8 @@ func (suite *GitTest) correctParent(sha GitSha, expectedParent GitSha) {
 	suite.NoError(err)
 
 	next, stop := iter.Pull2(branch.parents(commit))
-
-	actualParent, err, valid := next()
+	actualParent := getNext(suite, next)
 	stop()
-
-	suite.NoError(err)
-	suite.Equal(valid, true)
 
 	suite.Equal(expectedParent, actualParent)
 }
@@ -70,17 +74,13 @@ func (suite *GitTest) TestGetTwoParents() {
 	}
 
 	branch := newBranch(testRepo(), GitSha(""))
-
 	commit, err := branch.repo.Commit("bb983db95a6067f1dbdb86d762763ad35ab8bcc2")
 	suite.NoError(err)
 
-	next, stop := iter.Pull2(branch.parents(commit))
-
 	var parents []GitSha
-
+	next, stop := iter.Pull2(branch.parents(commit))
 	parents = append(parents, getNext(suite, next))
 	parents = append(parents, getNext(suite, next))
-
 	stop()
 
 	suite.Equal(expectedParents, parents)
@@ -101,23 +101,19 @@ func (suite *GitTest) TestGetMoreParents() {
 	commit, err := branch.repo.Commit("bb983db95a6067f1dbdb86d762763ad35ab8bcc2")
 	suite.NoError(err)
 
-	next, stop := iter.Pull2(branch.parents(commit))
-
 	var parents []GitSha
-
+	next, stop := iter.Pull2(branch.parents(commit))
 	parents = append(parents, getNext(suite, next))
 	parents = append(parents, getNext(suite, next))
 	parents = append(parents, getNext(suite, next))
 	parents = append(parents, getNext(suite, next))
 	parents = append(parents, getNext(suite, next))
-
 	stop()
 
 	suite.Equal(expectedParents, parents)
 }
 
 func (suite *GitTest) TestGetManyParents() {
-
 	expectedParents := []GitSha{
 		"b91435bba4bba776634622252b3793afcb711910",
 		"22950c7aaaf4b990a1f69388f06a003a1462642d",
@@ -135,21 +131,16 @@ func (suite *GitTest) TestGetManyParents() {
 	commit, err := branch.repo.Commit("bb983db95a6067f1dbdb86d762763ad35ab8bcc2")
 	suite.NoError(err)
 
-	next, stop := iter.Pull2(branch.parents(commit))
-
+	index := 0
 	var parents []GitSha
-
-	parents = append(parents, getNext(suite, next))
-	parents = append(parents, getNext(suite, next))
-	parents = append(parents, getNext(suite, next))
-	parents = append(parents, getNext(suite, next))
-	parents = append(parents, getNext(suite, next))
-	parents = append(parents, getNext(suite, next))
-	parents = append(parents, getNext(suite, next))
-	parents = append(parents, getNext(suite, next))
-	parents = append(parents, getNext(suite, next))
-
-	stop()
+	for sha, err := range branch.parents(commit) {
+		if index == len(expectedParents) {
+			break
+		}
+		index++
+		suite.NoError(err)
+		parents = append(parents, sha)
+	}
 
 	suite.Equal(expectedParents, parents)
 }
@@ -160,14 +151,6 @@ func getNext(suite *GitTest, next func() (GitSha, error, bool)) GitSha {
 	suite.Equal(valid, true)
 
 	return result
-}
-
-func (suite *GitTest) TestGetParentFromIterator() {
-	for _, testCase := range parentTests {
-		suite.Run(testCase.id, func() {
-			suite.correctParent(testCase.sha, testCase.parent)
-		})
-	}
 }
 
 func (suite *GitTest) TestResolveMergeCommits() {
