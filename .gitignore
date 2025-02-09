@@ -25,4 +25,4 @@ go.work.sum
 .env
 
 # git repo for testing purposes
-pkg/git/testdata/directory-importer
+git/testdata/directory-importer
